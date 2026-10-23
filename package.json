@@ -1,0 +1,9 @@
+{
+  "name": "sai-talk-android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sai Talk Android app (Capacitor + native Nearby Connections plugin)",
+  "scripts": { "sync-web": "sh scripts/sync-web.sh", "sync": "npm run sync-web && cap sync android" },
+  "dependencies": { "@capacitor/android": "^6.2.0", "@capacitor/core": "^6.2.0" },
+  "devDependencies": { "@capacitor/cli": "^6.2.0" }
+}

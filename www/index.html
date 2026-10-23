@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/sai-tag-icon-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<title>Sai Talk</title>
+<style>
+:root{--bg:#000;--panel:#141716;--panel2:#1c201d;--line:#2a2f2b;--ink:#fff;--mut:#9aa19c;--or:#f46a1b;--or2:#ff9b5c;--red:#e11d2e;--green:#22c55e;--r:16px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,'Segoe UI','Noto Sans','Noto Sans Devanagari',Roboto,sans-serif;overscroll-behavior:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+[hidden]{display:none!important}
+.app{height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+/* header */
+.hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.hdr img{width:34px;height:34px;border-radius:8px}
+.brand b{display:block;font-size:16px;letter-spacing:.08em;font-weight:800;line-height:1.1}
+.brand span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--or2);font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--mut);display:inline-block}
+.dot.on{background:var(--green)}.dot.wait{background:#eab308}.dot.off{background:var(--red)}
+.sp{flex:1}
+.ib{width:44px;height:44px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center}
+.ib svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sos{position:relative;overflow:hidden;width:auto;padding:0 16px;border-radius:22px;background:var(--red);border-color:#ff6b78;font-weight:800;letter-spacing:.06em;font-size:15px;user-select:none;touch-action:none}
+.sos i{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.4)}
+.sos span{position:relative}
+/* channels */
+.chs{display:flex;gap:8px;overflow-x:auto;padding:10px 14px;scrollbar-width:none}
+.chs::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:9px 16px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-weight:700;font-size:15px;position:relative}
+.chip.sel{background:var(--or);border-color:var(--or);color:#17130f}
+.chip .bd{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 4px}
+/* talk */
+.talk{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 14px 12px}
+.who{min-height:34px;text-align:center;font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px}
+.who.rx{color:var(--green)}.who.tx{color:var(--or2)}.who.busy{color:var(--red)}
+.who small{font-size:14px;font-weight:600;color:var(--mut)}
+.ptt{--s:min(54vw,36dvh,240px);width:var(--s);height:var(--s);border-radius:50%;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:radial-gradient(circle at 50% 35%,#ff9b5c,#f46a1b 60%,#d4520c);box-shadow:0 0 0 8px #1a0f08,0 0 0 10px #4a2410,0 14px 40px rgba(244,106,27,.35);transition:transform .08s,box-shadow .15s}
+.ptt svg{width:34%;height:34%;stroke:#17130f;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;position:absolute;left:33%;top:26%}
+.ptt em{position:absolute;left:0;right:0;bottom:17%;text-align:center;font-style:normal;font-weight:900;color:#17130f;font-size:calc(var(--s)*.085);letter-spacing:.06em}
+.ptt.down{transform:scale(.96);box-shadow:0 0 0 8px #2b1608,0 0 0 12px var(--or2),0 0 60px rgba(255,155,92,.7)}
+.ptt.busy{background:radial-gradient(circle at 50% 35%,#555,#333 60%,#222);box-shadow:0 0 0 8px #111,0 0 0 10px #333}
+.ptt.rxing{background:radial-gradient(circle at 50% 35%,#4ade80,#16a34a 60%,#0f7a37);box-shadow:0 0 0 8px #07200f,0 0 40px rgba(34,197,94,.5)}
+.ptt:disabled{opacity:.45}
+.hint{font-size:13px;color:var(--mut);font-weight:600;text-align:center}
+.lvl{height:6px;width:min(54vw,240px);border-radius:3px;background:var(--panel2);overflow:hidden}
+.lvl i{display:block;height:100%;width:0;background:var(--or2);transition:width .06s}
+/* lower panel */
+.low{flex:1;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--line);background:var(--panel)}
+.tabs{display:flex}
+.tabs button{flex:1;padding:12px;font-weight:800;font-size:15px;color:var(--mut);border-bottom:3px solid transparent}
+.tabs button.sel{color:#fff;border-color:var(--or)}
+.list{flex:1;overflow-y:auto;padding:6px 12px;-webkit-overflow-scrolling:touch}
+.msg{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.av{flex:none;width:38px;height:38px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:800;color:var(--or2);border:1px solid var(--line)}
+.mb{flex:1;min-width:0}
+.mh{display:flex;gap:8px;align-items:baseline;font-size:13px;color:var(--mut)}
+.mh b{color:#fff;font-size:15px}
+.mt{word-wrap:break-word;overflow-wrap:anywhere;font-size:16px}
+.play{display:inline-flex;align-items:center;gap:8px;margin-top:3px;padding:7px 14px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-weight:700;font-size:14px}
+.play.new{border-color:var(--or);color:var(--or2)}
+.play svg{width:16px;height:16px;fill:currentColor}
+.map{color:var(--or2);font-weight:700}
+.mem{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.mem .s{margin-left:auto;font-size:13px;color:var(--mut)}
+.more{display:block;margin:8px auto;color:var(--or2);font-weight:700;font-size:14px;padding:6px 12px}
+.empty{color:var(--mut);text-align:center;padding:30px 10px;font-size:15px}
+.comp{display:flex;gap:8px;padding:8px 10px;border-top:1px solid var(--line);background:var(--bg)}
+.comp input{flex:1;min-width:0;height:44px;border-radius:22px;border:1px solid var(--line);background:var(--panel);padding:0 16px;outline:none}
+.comp input:focus{border-color:var(--or)}
+.comp .ib.go{background:var(--or);border-color:var(--or)}.comp .ib.go svg{stroke:#17130f}
+/* login */
+.login{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;max-width:420px;margin:0 auto}
+.login img{width:96px;height:96px;border-radius:22px;box-shadow:0 10px 40px rgba(244,106,27,.35)}
+.login h1{margin:6px 0 0;font-size:30px;letter-spacing:.1em;font-weight:900}
+.login p{margin:0;color:var(--mut);font-size:16px}
+.login input{width:100%;height:60px;border-radius:16px;border:2px solid var(--line);background:var(--panel);text-align:center;font-size:30px;letter-spacing:.35em;font-weight:800;outline:none}
+.login input:focus{border-color:var(--or)}
+.btn{width:100%;height:56px;border-radius:16px;background:var(--or);color:#17130f;font-weight:900;font-size:18px}
+.btn.sec{background:var(--panel2);color:#fff;border:1px solid var(--line)}
+.err{color:#ff6b78;font-weight:700;min-height:22px;font-size:15px}
+.lang{display:flex;gap:8px}.lang button{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:14px}.lang button.sel{background:var(--or);color:#17130f;border-color:var(--or)}
+/* sheets */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{width:100%;max-width:560px;background:var(--panel);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));display:grid;gap:14px;max-height:88dvh;overflow:auto}
+.sheet h2{margin:0;font-size:20px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700}
+.row small{display:block;color:var(--mut);font-weight:500;font-size:13px}
+.sw{position:relative;width:52px;height:30px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;width:100%;height:100%;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;border-radius:15px;background:#3a3f3b;transition:.15s}
+.sw i::after{content:'';position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.15s}
+.sw input:checked+i{background:var(--or)}.sw input:checked+i::after{left:25px}
+input[type=range]{width:100%;accent-color:var(--or)}
+.sosov{background:#7a000a;align-items:center;padding:20px}
+.sosbox{width:100%;max-width:420px;text-align:center;display:grid;gap:14px}
+.sosbox h2{font-size:44px;margin:0;letter-spacing:.1em;animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.35}}
+.sosbox .n{font-size:26px;font-weight:800}
+.sosbox a{color:#fff;font-weight:800;font-size:18px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#fff;color:#17130f;border-radius:999px;padding:11px 20px;font-weight:700;z-index:40;max-width:90vw;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.banner{background:#3a2a00;color:#ffd27a;font-size:14px;font-weight:600;padding:8px 14px;text-align:center}
+</style>
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <img src="assets/sai-tag-icon-192.png" alt="">
+  <h1>SAI TALK</h1>
+  <p data-i18n="loginHelp">Enter the 6-digit code your admin gave you.</p>
+  <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="Code">
+  <div id="loginErr" class="err" role="alert"></div>
+  <button class="btn" id="loginBtn" data-i18n="signIn">Sign in</button>
+  <div class="lang"><button data-lang="en">English</button><button data-lang="hi">हिन्दी</button></div>
+</div>
+
+<div id="app" class="app" hidden>
+  <div class="hdr">
+    <img src="assets/sai-electric-mark.png" alt="">
+    <div class="brand"><b>SAI TALK</b><span><i class="dot" id="conDot"></i><em id="conTxt" style="font-style:normal"></em></span></div>
+    <div class="sp"></div>
+    <button class="ib sos" id="sosBtn" aria-label="SOS"><i></i><span>SOS</span></button>
+    <button class="ib" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </div>
+  <div id="banner" class="banner" hidden></div>
+  <div class="chs" id="chs"></div>
+  <div class="talk">
+    <div class="who" id="who"></div>
+    <button class="ptt" id="ptt" aria-label="Hold to talk">
+      <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg>
+      <em id="pttLbl"></em>
+    </button>
+    <div class="lvl"><i id="lvl"></i></div>
+    <div class="hint" id="hint"></div>
+  </div>
+  <div class="low">
+    <div class="tabs"><button id="tabMsg" class="sel" data-i18n="messages">Messages</button><button id="tabPpl" data-i18n="people">People</button></div>
+    <div class="list" id="list"></div>
+    <div class="comp" id="comp">
+      <button class="ib" id="locBtn" aria-label="Send location"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></button>
+      <input id="txt" maxlength="500" data-i18n-ph="typeMsg" placeholder="Type a message" autocomplete="off">
+      <button class="ib go" id="sendTxt" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<div id="settings" class="ov" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <h2 data-i18n="settings">Settings</h2>
+    <div class="row"><div data-i18n="tapMode">Tap to talk<small data-i18n="tapModeD">Tap once to start, tap again to stop</small></div><label class="sw"><input type="checkbox" id="optTap"><i></i></label></div>
+    <div class="row"><div data-i18n="beeps">Beep sounds<small data-i18n="beepsD">Short beep when you can talk or someone starts</small></div><label class="sw"><input type="checkbox" id="optBeep"><i></i></label></div>
+    <div class="row"><div data-i18n="keepOn">Keep screen on<small data-i18n="keepOnD">Needed on the web version so you do not miss calls</small></div><label class="sw"><input type="checkbox" id="optWake"><i></i></label></div>
+    <div><div class="row" data-i18n="volume">Volume</div><input type="range" id="optVol" min="0" max="100"></div>
+    <div class="lang"><button data-lang="en">English</button><button data-lang="hi">हिन्दी</button></div>
+    <div class="row"><div id="meLine"></div></div>
+    <button class="btn sec" id="logoutBtn" data-i18n="signOut">Sign out</button>
+    <button class="btn" id="closeSet" data-i18n="done">Done</button>
+  </div>
+</div>
+
+<div id="sosov" class="ov sosov" hidden>
+  <div class="sosbox">
+    <h2>SOS</h2>
+    <div class="n" id="sosWho"></div>
+    <div id="sosTime"></div>
+    <a id="sosMap" target="_blank" rel="noopener" hidden data-i18n="openMap">Open map</a>
+    <button class="btn" id="sosAck" data-i18n="responding">I am responding</button>
+    <button class="btn sec" id="sosClose" data-i18n="dismiss">Dismiss</button>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+const BASE = window.SAI_BASE !== undefined ? window.SAI_BASE : (NATIVE ? 'https://sai-talk.5mixnmatch.workers.dev' : '');
+
+'use strict';
+/* ---------------- helpers ---------------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = { get(k, d) { try { const v = localStorage.getItem('saitalk.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('saitalk.' + k, JSON.stringify(v)); } catch {} } };
+const ago = (ts) => { const d = new Date(ts); const same = d.toDateString() === new Date().toDateString(); const hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); return same ? hm : d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + hm; };
+
+/* ---------------- i18n ---------------- */
+const I18N = {
+  en: { loginHelp: 'Enter the 6-digit code your admin gave you.', signIn: 'Sign in', messages: 'Messages', people: 'People', typeMsg: 'Type a message', settings: 'Settings', tapMode: 'Tap to talk', tapModeD: 'Tap once to start, tap again to stop', beeps: 'Beep sounds', beepsD: 'Short beep when you can talk or someone starts', keepOn: 'Keep screen on', keepOnD: 'Needed on the web version so you do not miss calls', volume: 'Volume', signOut: 'Sign out', done: 'Done', openMap: 'Open map', responding: 'I am responding', dismiss: 'Dismiss',
+    hold: 'HOLD', tap: 'TAP', holdHint: 'Hold the button and speak. Release to finish.', tapHint: 'Tap to start, tap again to stop.', talking: 'Talking…', speaking: 'is talking', busy: 'is talking. Wait.', ready: 'Ready', connected: 'Connected', connecting: 'Connecting…', offline: 'Offline', noMsg: 'No messages yet. Hold the button and say hello.', loadOlder: 'Load older', online: 'online', you: 'You', badCode: 'Wrong code. Check with your admin.', tooMany: 'Too many tries. Wait 10 minutes.', netErr: 'Cannot reach the server.', offBanner: 'No connection. Your voice will be saved and sent when you are back online.', queued: 'Saved. Will send when online.', sentLate: 'Saved messages sent.', sosHold: 'Hold SOS for 2 seconds', sosSent: 'SOS sent to everyone', locSent: 'Location sent', locFail: 'Could not get location. Allow location access.', micFail: 'Microphone blocked. Allow microphone access in browser settings.', noCh: 'You are not in any channel yet. Ask your admin.', timeout: 'Maximum 60 seconds', sosFrom: 'needs help', ackBy: 'Responding:', signedOut: 'Signed out by admin', short: 'Hold a little longer', pos: 'Position', replay: 'Play', playing: 'Stop', sosConfirm: 'Sending SOS…' },
+  hi: { loginHelp: 'एडमिन का दिया 6 अंकों का कोड डालें।', signIn: 'साइन इन करें', messages: 'संदेश', people: 'लोग', typeMsg: 'संदेश लिखें', settings: 'सेटिंग', tapMode: 'टैप करके बोलें', tapModeD: 'एक बार टैप करें शुरू, दोबारा टैप करें बंद', beeps: 'बीप आवाज़', beepsD: 'बोलने की अनुमति या किसी के शुरू करने पर छोटी बीप', keepOn: 'स्क्रीन चालू रखें', keepOnD: 'वेब वर्ज़न में कॉल न छूटे इसलिए ज़रूरी', volume: 'आवाज़', signOut: 'साइन आउट', done: 'ठीक है', openMap: 'नक्शा खोलें', responding: 'मैं आ रहा हूँ', dismiss: 'बंद करें',
+    hold: 'दबाएँ', tap: 'टैप', holdHint: 'बटन दबाकर रखें और बोलें। खत्म होने पर छोड़ दें।', tapHint: 'शुरू करने के लिए टैप करें, बंद करने के लिए दोबारा टैप करें।', talking: 'बोल रहे हैं…', speaking: 'बोल रहे हैं', busy: 'बोल रहे हैं। रुकें।', ready: 'तैयार', connected: 'जुड़ा है', connecting: 'जुड़ रहा है…', offline: 'ऑफ़लाइन', noMsg: 'अभी कोई संदेश नहीं। बटन दबाकर नमस्ते बोलें।', loadOlder: 'पुराने देखें', online: 'ऑनलाइन', you: 'आप', badCode: 'कोड गलत है। एडमिन से पूछें।', tooMany: 'बहुत कोशिशें। 10 मिनट रुकें।', netErr: 'सर्वर से नहीं जुड़ पाया।', offBanner: 'कनेक्शन नहीं है। आपकी आवाज़ सेव होगी और नेटवर्क आने पर भेजी जाएगी।', queued: 'सेव हो गया। नेटवर्क आने पर जाएगा।', sentLate: 'सेव किए संदेश भेज दिए।', sosHold: 'SOS को 2 सेकंड दबाकर रखें', sosSent: 'SOS सबको भेज दिया', locSent: 'लोकेशन भेज दी', locFail: 'लोकेशन नहीं मिली। लोकेशन की अनुमति दें।', micFail: 'माइक बंद है। ब्राउज़र सेटिंग में माइक की अनुमति दें।', noCh: 'आप अभी किसी चैनल में नहीं हैं। एडमिन से कहें।', timeout: 'अधिकतम 60 सेकंड', sosFrom: 'को मदद चाहिए', ackBy: 'आ रहे हैं:', signedOut: 'एडमिन ने साइन आउट कर दिया', short: 'थोड़ा और दबाकर रखें', pos: 'स्थान', replay: 'सुनें', playing: 'रोकें', sosConfirm: 'SOS भेज रहे हैं…' },
+};
+let lang = store.get('lang', (navigator.language || '').startsWith('hi') ? 'hi' : 'en');
+const t = (k) => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach((el) => { const k = el.dataset.i18n; const first = el.firstChild && el.firstChild.nodeType === 3 ? el.firstChild : null; if (first) first.nodeValue = t(k); else if (!el.children.length) el.textContent = t(k); });
+  document.querySelectorAll('small[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-lang]').forEach((b) => b.classList.toggle('sel', b.dataset.lang === lang));
+  if (S.me) { renderAll(); }
+}
+
+/* ---------------- state ---------------- */
+const S = { token: store.get('token', null), me: null, channels: [], users: [], online: [], ch: null, ws: null, wsState: 'off', tab: 'msg',
+  hist: {}, hasMore: {}, rx: new Map(), speaking: {}, unread: {}, tx: null, opts: Object.assign({ tap: false, beep: true, wake: true, vol: 100 }, store.get('opts', {})) };
+const stats = { rxFrames: 0, rxDecoded: 0, txFrames: 0, txSent: 0 };
+window.__talk = { S, stats };
+
+/* ---------------- audio: playback ---------------- */
+let pctx = null, outGain = null;
+function playCtx() {
+  if (!pctx) { pctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' }); outGain = pctx.createGain(); outGain.connect(pctx.destination); setVol(); }
+  if (pctx.state === 'suspended') pctx.resume().catch(() => {});
+  return pctx;
+}
+function setVol() { if (outGain) outGain.gain.value = Math.pow(S.opts.vol / 100, 1.6); }
+function beep(f, ms = 80, v = .25) {
+  if (!S.opts.beep) return; const c = playCtx(); const o = c.createOscillator(), g = c.createGain();
+  o.frequency.value = f; g.gain.value = v; o.connect(g); g.connect(c.destination); o.start(); g.gain.setValueAtTime(v, c.currentTime + ms / 1000 - .02); g.gain.linearRampToValueAtTime(0, c.currentTime + ms / 1000); o.stop(c.currentTime + ms / 1000);
+}
+const hasWC = typeof AudioDecoder !== 'undefined' && typeof AudioEncoder !== 'undefined';
+function ulawDecode(b) { const o = new Float32Array(b.length); for (let i = 0; i < b.length; i++) { let u = ~b[i] & 0xff; const s = u & 0x80, e = (u >> 4) & 7, m = u & 15; let v = ((m << 3) + 0x84) << e; v -= 0x84; o[i] = (s ? -v : v) / 32768; } return o; }
+function ulawEncode(f) { const o = new Uint8Array(f.length); for (let i = 0; i < f.length; i++) { let s = Math.max(-1, Math.min(1, f[i])) * 32767 | 0; const sign = s < 0 ? 0x80 : 0; if (s < 0) s = -s; s += 0x84; if (s > 0x7fff) s = 0x7fff; let e = 7; for (let m = 0x4000; (s & m) === 0 && e > 0; e--, m >>= 1); o[i] = ~(sign | (e << 4) | ((s >> (e + 3)) & 15)) & 0xff; } return o; }
+// A "sink" plays frames of one voice message in order, with a small jitter buffer.
+function makeSink(codec, rate) {
+  const ctx = playCtx(); const sink = { next: 0, closed: false, srcs: new Set(), onEnd: null };
+  let dec = null, ts = 0;
+  const schedule = (f32, sr) => {
+    stats.rxDecoded++;
+    const buf = ctx.createBuffer(1, f32.length, sr); buf.copyToChannel(f32, 0);
+    const s = ctx.createBufferSource(); s.buffer = buf; s.connect(outGain);
+    const now = ctx.currentTime; if (sink.next < now + .02) sink.next = now + .14;
+    s.start(sink.next); sink.next += buf.duration; sink.srcs.add(s); s.onended = () => { sink.srcs.delete(s); if (sink.closed && !sink.srcs.size && sink.onEnd) sink.onEnd(); };
+  };
+  if (codec === 'opus') {
+    if (!hasWC) return null;
+    dec = new AudioDecoder({ output: (ad) => { const n = ad.numberOfFrames; const f = new Float32Array(n); ad.copyTo(f, { planeIndex: 0, format: 'f32-planar' }); schedule(f, ad.sampleRate); ad.close(); }, error: () => {} });
+    dec.configure({ codec: 'opus', sampleRate: rate || 16000, numberOfChannels: 1 });
+  }
+  sink.push = (u8) => {
+    if (codec === 'opus') { try { dec.decode(new EncodedAudioChunk({ type: 'key', timestamp: ts, data: u8 })); ts += 20000; } catch {} }
+    else schedule(ulawDecode(u8), rate || 16000);
+  };
+  sink.end = () => { sink.closed = true; const fin = () => { try { dec && dec.state !== 'closed' && dec.close(); } catch {} }; if (dec) dec.flush().then(fin).catch(fin); if (!sink.srcs.size && sink.onEnd) setTimeout(() => !sink.srcs.size && sink.onEnd && sink.onEnd(), 50); };
+  sink.stop = () => { sink.closed = true; for (const s of sink.srcs) { try { s.stop(); } catch {} } sink.srcs.clear(); try { dec && dec.state !== 'closed' && dec.close(); } catch {} };
+  return sink;
+}
+function codecSupportedForRx(c) { return c === 'ulaw' || (c === 'opus' && hasWC); }
+
+/* ---------------- audio: capture ---------------- */
+const TARGET = 16000, FRAME = 320;
+let mic = null, micTimer = null;
+const WORKLET = `class P extends AudioWorkletProcessor{process(i){const c=i[0]&&i[0][0];if(c)this.port.postMessage(c.slice(0));return true}}registerProcessor('cap',P)`;
+async function micOpen() {
+  clearTimeout(micTimer);
+  if (mic) return mic;
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = ctx.createMediaStreamSource(stream);
+  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' })));
+  const node = new AudioWorkletNode(ctx, 'cap'); src.connect(node);
+  mic = { stream, ctx, node, rate: ctx.sampleRate, sink: null };
+  node.port.onmessage = (e) => { if (mic && mic.sink) mic.sink(e.data); };
+  return mic;
+}
+function micCloseSoon(ms = 6000) { clearTimeout(micTimer); micTimer = setTimeout(() => { if (!mic) return; try { mic.stream.getTracks().forEach((t) => t.stop()); mic.ctx.close(); } catch {} mic = null; }, ms); }
+// Turns raw mic blocks into 20 ms frames at 16 kHz and hands each encoded frame to onFrame.
+function makeEncoder(inRate, onFrame, onLevel) {
+  let enc = null, codec = 'ulaw', ts = 0, carry = [], pos = 0, acc = [];
+  if (hasWC) {
+    try { enc = new AudioEncoder({ output: (c) => { const u = new Uint8Array(c.byteLength); c.copyTo(u); onFrame(u); }, error: () => {} }); enc.configure({ codec: 'opus', sampleRate: TARGET, numberOfChannels: 1, bitrate: 20000 }); codec = 'opus'; } catch { enc = null; }
+  }
+  const step = inRate / TARGET;
+  const emit = (f) => {
+    let sum = 0; for (let i = 0; i < f.length; i++) sum += f[i] * f[i]; onLevel && onLevel(Math.sqrt(sum / f.length));
+    if (enc) { const ad = new AudioData({ format: 'f32-planar', sampleRate: TARGET, numberOfFrames: f.length, numberOfChannels: 1, timestamp: ts, data: f }); ts += 20000; enc.encode(ad); ad.close(); }
+    else onFrame(ulawEncode(f));
+  };
+  return { codec, rate: TARGET,
+    push(block) { // linear-interpolating resampler
+      for (let i = 0; i < block.length; i++) carry.push(block[i]);
+      while (pos + 1 < carry.length) { const i = Math.floor(pos), fr = pos - i; acc.push(carry[i] * (1 - fr) + carry[i + 1] * fr); pos += step; if (acc.length === FRAME) { emit(Float32Array.from(acc)); acc = []; } }
+      const drop = Math.floor(pos); if (drop > 0) { carry = carry.slice(drop); pos -= drop; }
+    },
+    close() { try { enc && enc.state !== 'closed' && enc.close(); } catch {} } };
+}
+
+/* ---------------- network ---------------- */
+const api = async (p, o = {}) => {
+  const r = await fetch(BASE + p, Object.assign({ headers: Object.assign({ authorization: 'Bearer ' + S.token }, o.headers || {}) }, o));
+  if (r.status === 401) { signOut(true); throw new Error('auth'); } if (!r.ok) throw new Error(String(r.status)); return r;
+};
+let retry = 0, pingT = null;
+function connect() {
+  if (!S.token) return; clearTimeout(connect.t); try { S.ws && S.ws.close(); } catch {}
+  setCon('wait');
+  const ws = new WebSocket((BASE ? BASE.replace(/^http/, 'ws') : (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host) + '/ws?token=' + encodeURIComponent(S.token));
+  ws.binaryType = 'arraybuffer'; S.ws = ws;
+  ws.onopen = () => { retry = 0; setCon('on'); clearInterval(pingT); pingT = setInterval(() => ws.readyState === 1 && ws.send('{"t":"ping"}'), 20000); flushQueue(); };
+  ws.onmessage = (e) => { if (typeof e.data === 'string') onJson(JSON.parse(e.data)); else onBin(new Uint8Array(e.data)); };
+  ws.onclose = (e) => {
+    clearInterval(pingT); if (S.ws !== ws) return; S.ws = null; endAllRx();
+    if (e.code === 4000 || e.code === 4001) { toast(t('signedOut')); return signOut(true); }
+    setCon('off'); retry = Math.min(retry + 1, 6); connect.t = setTimeout(connect, Math.min(1000 * 2 ** retry, 15000));
+  };
+  ws.onerror = () => {};
+}
+function setCon(s) { S.wsState = s; const d = $('#conDot'); d.className = 'dot ' + s; $('#conTxt').textContent = s === 'on' ? t('connected') : s === 'wait' ? t('connecting') : t('offline'); const b = $('#banner'); b.hidden = s === 'on'; b.textContent = t('offBanner'); }
+window.addEventListener('online', () => S.token && (!S.ws || S.ws.readyState > 1) && connect());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { if (S.token && (!S.ws || S.ws.readyState > 1)) connect(); wakeLock(); } });
+
+function onJson(m) {
+  switch (m.t) {
+    case 'init': window.Nearby && Nearby.rememberNames(m.users); S.me = m.me; S.channels = m.channels; S.users = m.users; S.online = m.online; if (!S.channels.find((c) => c.id === S.ch)) S.ch = (S.channels.find((c) => c.id === store.get('ch')) || S.channels[0] || {}).id || null; renderAll(); if (S.ch) loadHistory(S.ch, true); break;
+    case 'channels': S.channels = m.channels; if (!S.channels.find((c) => c.id === S.ch)) S.ch = S.channels[0] ? S.channels[0].id : null; renderAll(); break;
+    case 'presence': S.online = m.online; renderPeople(); break;
+    case 'rx_start': rxStart(m); break;
+    case 'rx_end': rxEnd(m.tx); break;
+    case 'tx_grant': txGranted(m); break;
+    case 'tx_busy': txBusy(m); break;
+    case 'tx_denied': txAbort(); break;
+    case 'tx_end': if (m.reason === 'timeout') { toast(t('timeout')); txStop(true); } break;
+    case 'msg': onMsg(m.m); break;
+    case 'sos': showSos(m); break;
+    case 'sos_ack': if (sosCur && sosCur.id === m.id) { sosCur.acks.add(m.by); $('#sosTime').textContent = t('ackBy') + ' ' + [...sosCur.acks].join(', '); } break;
+  }
+}
+function onBin(u8) {
+  if (u8[0] !== 1) return; const tx = (u8[1] << 24 | u8[2] << 16 | u8[3] << 8 | u8[4]) >>> 0; const r = S.rx.get(tx); if (!r) return;
+  stats.rxFrames++; if (r.sink) r.sink.push(u8.subarray(5));
+}
+
+/* ---------------- receive ---------------- */
+function rxStart(m) {
+  const r = { tx: m.tx, ch: m.ch, name: m.name, from: m.from, sink: codecSupportedForRx(m.codec) ? makeSink(m.codec, m.rate) : null };
+  S.rx.set(m.tx, r); S.speaking[m.ch] = m.name; beep(720, 60, .18); renderTalk(); renderChannels();
+  if (document.hidden && 'vibrate' in navigator) navigator.vibrate(40);
+}
+function rxEnd(tx) { const r = S.rx.get(tx); if (!r) return; S.rx.delete(tx); if (r.sink) r.sink.end(); if (S.speaking[r.ch] === r.name) delete S.speaking[r.ch]; renderTalk(); renderChannels(); }
+function endAllRx() { for (const r of S.rx.values()) { r.sink && r.sink.stop(); } S.rx.clear(); S.speaking = {}; renderTalk(); }
+function chanBusy(ch) { return S.speaking[ch] || null; }
+
+/* ---------------- transmit ---------------- */
+let wantTx = false, pressAt = 0;
+async function txBegin() {
+  if (!S.ch || S.tx) return; if (chanBusy(S.ch)) { navigator.vibrate && navigator.vibrate(80); return renderTalk(); }
+  playCtx(); wantTx = true; pressAt = Date.now();
+  const tx = { ch: S.ch, state: 'req', pending: [], frames: [], offline: !(S.ws && S.ws.readyState === 1), start: Date.now(), codec: 'ulaw', rate: TARGET, enc: null };
+  S.tx = tx; renderTalk();
+  let m; try { m = await micOpen(); } catch { toast(t('micFail')); S.tx = null; wantTx = false; return renderTalk(); }
+  if (S.tx !== tx) return;
+  tx.enc = makeEncoder(m.rate, (u8) => { stats.txFrames++; tx.frames.push(u8); if (tx.state === 'live') sendFrame(u8); else if (tx.state === 'req' || tx.state === 'meshreq') tx.pending.push(u8); else if (tx.state === 'mesh') meshSend(tx, u8); }, (lv) => { $('#lvl').style.width = Math.min(100, lv * 400) + '%'; });
+  tx.codec = tx.enc.codec; m.sink = (b) => tx.enc.push(b);
+  if (tx.offline && window.Nearby && Nearby.ready()) {
+    tx.state = 'meshreq'; tx.mb = [];
+    const ms = await Nearby.startStream(tx.ch, tx.codec);
+    if (S.tx !== tx) { ms.end && ms.end(); return; }
+    if (ms.busy) { toast(t('busy')); beep(300, 140, .2); return txAbort(); }
+    tx.mesh = ms; tx.state = 'mesh'; beep(1000, 70, .2); for (const f of tx.pending) meshSend(tx, f); tx.pending = [];
+  }
+  else if (tx.offline) { tx.state = 'off'; beep(520, 60, .15); }
+  else { S.ws.send(JSON.stringify({ t: 'tx_start', ch: tx.ch, codec: tx.codec, rate: TARGET })); }
+  if (!wantTx) txEnd();
+  renderTalk();
+}
+function meshSend(tx, u8) { tx.mb.push(u8); if (tx.mb.length >= 2) tx.mesh.sendFrames(tx.mb.splice(0)).catch(() => {}); }
+function sendFrame(u8) { if (S.ws && S.ws.readyState === 1) { S.ws.send(u8); stats.txSent++; } }
+function txGranted(m) {
+  const tx = S.tx; if (!tx || tx.ch !== m.ch || tx.state !== 'req') return;
+  tx.state = 'live'; beep(1000, 70, .2); for (const f of tx.pending) sendFrame(f); tx.pending = []; if (!wantTx) txEnd(); renderTalk();
+}
+function txBusy(m) { toast((m.by || '') + ' ' + t('busy')); beep(300, 140, .2); txAbort(); }
+function txAbort() { const tx = S.tx; if (!tx) return; if (tx.mesh) tx.mesh.end().catch(() => {}); wantTx = false; if (mic) mic.sink = null; tx.enc && tx.enc.close(); S.tx = null; micCloseSoon(); $('#lvl').style.width = '0'; renderTalk(); }
+function txEnd() {
+  const tx = S.tx; if (!tx) return; wantTx = false;
+  if (mic) mic.sink = null; setTimeout(() => tx.enc && tx.enc.close(), 150);
+  const dur = Date.now() - tx.start; $('#lvl').style.width = '0';
+  if (tx.state === 'live' || tx.state === 'req') { if (S.ws && S.ws.readyState === 1) S.ws.send(JSON.stringify({ t: 'tx_end', ch: tx.ch })); }
+  else if (tx.state === 'mesh' || tx.state === 'meshreq') {
+    const ms = tx.mesh; if (ms) { (tx.mb && tx.mb.length ? ms.sendFrames(tx.mb.splice(0)) : Promise.resolve()).catch(() => {}).then(() => ms.end()).catch(() => {}); }
+    if (dur >= 400) queueVoice(tx, dur); else toast(t('short'));
+  }
+  else if (tx.state === 'off') { if (dur < 400) toast(t('short')); else { queueVoice(tx, dur); toast(t('queued')); } }
+  if (tx.state !== 'off' && dur < 400) toast(t('short'));
+  if (tx.state === 'live') beep(640, 60, .15);
+  S.tx = null; micCloseSoon(); renderTalk();
+}
+function txStop() { wantTx = false; if (S.tx) txEnd(); }
+
+// Voice recorded while offline is kept on the phone and uploaded later.
+function queueVoice(tx, dur) {
+  const q = store.get('queue', []); const n = tx.frames.reduce((a, f) => a + 2 + f.length, 0); const buf = new Uint8Array(n); let o = 0;
+  for (const f of tx.frames) { buf[o++] = f.length >> 8; buf[o++] = f.length & 255; buf.set(f, o); o += f.length; }
+  let s = ''; for (let i = 0; i < buf.length; i += 8192) s += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
+  q.push({ ch: tx.ch, codec: tx.codec, rate: TARGET, dur, ts: tx.start, b64: btoa(s) }); store.set('queue', q.slice(-20));
+}
+let flushing = false;
+async function flushQueue() {
+  if (flushing) return; let q = store.get('queue', []); if (!q.length) return; flushing = true; let sent = 0;
+  try { while (q.length) { const it = q[0]; const bin = Uint8Array.from(atob(it.b64), (c) => c.charCodeAt(0));
+    await api(`/api/voice?ch=${it.ch}&codec=${it.codec}&rate=${it.rate}&dur=${it.dur}&ts=${it.ts}`, { method: 'POST', body: bin }); q.shift(); sent++; store.set('queue', q); } } catch {}
+  flushing = false; if (sent) { toast(t('sentLate')); if (S.ch) loadHistory(S.ch, true); }
+}
+
+/* ---------------- history ---------------- */
+async function loadHistory(ch, fresh) {
+  try {
+    const before = !fresh && S.hist[ch] && S.hist[ch][0] ? S.hist[ch][0].id : null;
+    const r = await (await api(`/api/history?ch=${ch}&limit=30` + (before ? `&before=${before}` : ''))).json();
+    S.hist[ch] = fresh ? r.items : r.items.concat(S.hist[ch] || []); S.hasMore[ch] = r.items.length >= 30; renderList();
+  } catch {}
+}
+function onMsg(m) {
+  const h = (S.hist[m.channel] ||= []); if (!h.find((x) => x.id === m.id)) h.push(m);
+  if (m.channel === S.ch) { renderList(true); } else { S.unread[m.channel] = (S.unread[m.channel] || 0) + 1; renderChannels(); }
+  if (m.kind === 'voice' && !m.late) { const k = 'heard.' + m.channel; store.set(k, Math.max(store.get(k, 0), m.id)); }
+  if (m.kind !== 'voice' && m.sender !== (S.me && S.me.id)) beep(880, 60, .15);
+}
+let replay = null;
+async function playMsg(id, btn) {
+  if (replay) { const same = replay.id === id; replay.sink.stop(); replay = null; renderList(); if (same) return; }
+  const m = Object.values(S.hist).flat().find((x) => x.id === id); if (!m) return;
+  try {
+    const buf = new Uint8Array(await (await api('/api/audio/' + id)).arrayBuffer()); const sink = makeSink(m.codec, m.rate); if (!sink) return toast('Codec not supported');
+    replay = { id, sink }; sink.onEnd = () => { if (replay && replay.id === id) { replay = null; renderList(); } };
+    for (let o = 0; o + 2 <= buf.length;) { const n = buf[o] << 8 | buf[o + 1]; o += 2; if (o + n > buf.length) break; sink.push(buf.subarray(o, o + n)); o += n; }
+    sink.end(); store.set('heard.' + m.channel, Math.max(store.get('heard.' + m.channel, 0), m.id)); renderList();
+  } catch { toast(t('netErr')); }
+}
+
+/* ---------------- text / location / SOS ---------------- */
+function sendText() { const i = $('#txt'); const v = i.value.trim(); if (!v || !S.ch || !S.ws || S.ws.readyState !== 1) return; S.ws.send(JSON.stringify({ t: 'text', ch: S.ch, text: v })); i.value = ''; }
+const getPos = () => new Promise((ok, no) => { if (!navigator.geolocation) return no(); navigator.geolocation.getCurrentPosition((p) => ok(p.coords), no, { enableHighAccuracy: true, timeout: 7000, maximumAge: 20000 }); });
+async function sendLoc() { if (!S.ch || !S.ws || S.ws.readyState !== 1) return; try { const c = await getPos(); S.ws.send(JSON.stringify({ t: 'loc', ch: S.ch, lat: c.latitude, lon: c.longitude })); toast(t('locSent')); } catch { toast(t('locFail')); } }
+let sosCur = null, sosAudio = null;
+function showSos(m) {
+  sosCur = { id: m.id, acks: new Set() }; const mine = S.me && m.from === S.me.id;
+  $('#sosWho').textContent = mine ? t('sosSent') : m.name + ' ' + t('sosFrom'); $('#sosTime').textContent = ago(m.ts);
+  const a = $('#sosMap'); if (m.lat != null) { a.href = `https://www.google.com/maps?q=${m.lat},${m.lon}`; a.hidden = false; } else a.hidden = true;
+  $('#sosAck').hidden = mine; $('#sosov').hidden = false; document.body.style.overflow = 'hidden';
+  let n = 0; clearInterval(sosAudio); const ring = () => { if (n++ > 12) return clearInterval(sosAudio); const was = S.opts.beep; S.opts.beep = true; beep(950, 220, .35); setTimeout(() => beep(700, 220, .35), 260); S.opts.beep = was; if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]); }; ring(); sosAudio = setInterval(ring, 900);
+}
+function closeSos() { $('#sosov').hidden = true; clearInterval(sosAudio); document.body.style.overflow = ''; sosCur = null; }
+function bindSos() {
+  const b = $('#sosBtn'), bar = b.querySelector('i'); let t0 = 0, raf = 0, done = false;
+  const stop = () => { cancelAnimationFrame(raf); bar.style.width = '0'; t0 = 0; };
+  const loop = () => { const p = Math.min(1, (Date.now() - t0) / 2000); bar.style.width = p * 100 + '%'; if (p >= 1 && !done) { done = true; fire(); stop(); return; } raf = requestAnimationFrame(loop); };
+  const fire = async () => { navigator.vibrate && navigator.vibrate(300); toast(t('sosConfirm')); let c = null; try { c = await getPos(); } catch {} if (S.ws && S.ws.readyState === 1) S.ws.send(JSON.stringify({ t: 'sos', lat: c && c.latitude, lon: c && c.longitude })); };
+  b.addEventListener('pointerdown', (e) => { e.preventDefault(); done = false; t0 = Date.now(); loop(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => b.addEventListener(ev, () => { if (t0 && !done) toast(t('sosHold')); stop(); }));
+  b.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+/* ---------------- render ---------------- */
+function renderAll() { renderChannels(); renderTalk(); renderList(); $('#meLine').textContent = S.me ? S.me.name : ''; }
+function renderChannels() {
+  const el = $('#chs'); el.innerHTML = '';
+  if (!S.channels.length) { el.innerHTML = `<div class="empty" style="width:100%;padding:8px">${esc(t('noCh'))}</div>`; return; }
+  for (const c of S.channels) { const b = document.createElement('button'); b.className = 'chip' + (c.id === S.ch ? ' sel' : ''); b.textContent = c.name;
+    const u = S.unread[c.id]; if (u && c.id !== S.ch) { const s = document.createElement('span'); s.className = 'bd'; s.textContent = u > 9 ? '9+' : u; b.appendChild(s); }
+    if (S.speaking[c.id] && c.id !== S.ch) b.style.borderColor = 'var(--green)';
+    b.onclick = () => { if (S.tx) return; S.ch = c.id; S.unread[c.id] = 0; store.set('ch', c.id); renderAll(); loadHistory(c.id, true); }; el.appendChild(b); }
+}
+function renderTalk() {
+  const who = $('#who'), p = $('#ptt'), hint = $('#hint'); const sp = S.ch && chanBusy(S.ch);
+  p.disabled = !S.ch; p.classList.toggle('down', !!S.tx); p.classList.toggle('rxing', !!sp && !S.tx); p.classList.toggle('busy', !!sp && !S.tx && false);
+  $('#pttLbl').textContent = S.tx ? '' : sp ? '' : (S.opts.tap ? t('tap') : t('hold'));
+  who.className = 'who' + (S.tx ? ' tx' : sp ? ' rx' : '');
+  if (S.tx) who.textContent = t('talking'); else if (sp) who.textContent = sp + ' ' + t('speaking'); else who.innerHTML = `<small>${esc(S.ch ? t('ready') : '')}</small>`;
+  hint.textContent = S.opts.tap ? t('tapHint') : t('holdHint');
+}
+function renderList(stick) {
+  const el = $('#list'); if (S.tab === 'ppl') return renderPeople();
+  const h = S.hist[S.ch] || []; const heard = store.get('heard.' + S.ch, 0); const atBottom = stick || el.scrollHeight - el.scrollTop - el.clientHeight < 80; const keep = el.scrollHeight - el.scrollTop;
+  if (!h.length) { el.innerHTML = `<div class="empty">${esc(t('noMsg'))}</div>`; return; }
+  let html = S.hasMore[S.ch] ? `<button class="more" id="moreBtn">${esc(t('loadOlder'))}</button>` : '';
+  for (const m of h) {
+    const mine = S.me && m.sender === S.me.id; let body = '';
+    if (m.kind === 'voice') { const on = replay && replay.id === m.id; const isNew = !mine && m.id > heard && !on; body = `<button class="play${isNew ? ' new' : ''}" data-id="${m.id}"><svg viewBox="0 0 16 16">${on ? '<rect x="3" y="3" width="10" height="10" rx="1"/>' : '<path d="M4 2l10 6-10 6z"/>'}</svg>${esc(on ? t('playing') : t('replay'))} · ${Math.max(1, Math.round(m.dur / 1000))}s</button>`; }
+    else if (m.kind === 'loc') body = `<a class="map" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${+m.lat},${+m.lon}">📍 ${esc(t('pos'))} ${(+m.lat).toFixed(5)}, ${(+m.lon).toFixed(5)}</a>`;
+    else body = `<div class="mt">${esc(m.text)}</div>`;
+    html += `<div class="msg"><div class="av">${esc((m.name || '?').trim().charAt(0).toUpperCase())}</div><div class="mb"><div class="mh"><b>${esc(mine ? t('you') : m.name)}</b><span>${esc(ago(m.ts))}</span></div>${body}</div></div>`;
+  }
+  el.innerHTML = html; el.scrollTop = atBottom ? el.scrollHeight : el.scrollHeight - keep;
+  el.querySelectorAll('.play').forEach((b) => (b.onclick = () => playMsg(+b.dataset.id, b))); const mb = $('#moreBtn'); if (mb) mb.onclick = () => loadHistory(S.ch, false);
+}
+function renderPeople() {
+  if (S.tab !== 'ppl') return; const el = $('#list'); const on = new Set(S.online);
+  const list = S.users.slice().sort((a, b) => (on.has(b.id) - on.has(a.id)) || a.name.localeCompare(b.name));
+  el.innerHTML = list.map((u) => `<div class="mem"><div class="av">${esc(u.name.charAt(0).toUpperCase())}</div><b>${esc(u.name)}${S.me && u.id === S.me.id ? ' (' + esc(t('you')) + ')' : ''}</b><span class="s"><i class="dot ${on.has(u.id) ? 'on' : ''}"></i> ${on.has(u.id) ? esc(t('online')) : ''}</span></div>`).join('');
+}
+let toastT; function toast(s) { const el = $('#toast'); el.textContent = s; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), 2600); }
+
+/* ---------------- screen wake lock ---------------- */
+let wl = null; async function wakeLock() { try { if (S.opts.wake && S.me && 'wakeLock' in navigator && !document.hidden && !wl) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => (wl = null)); } else if (!S.opts.wake && wl) { wl.release(); wl = null; } } catch {} }
+
+/* ---------------- wiring ---------------- */
+async function login() {
+  const code = $('#code').value.replace(/\D/g, ''); $('#loginErr').textContent = ''; if (code.length !== 6) return $('#loginErr').textContent = t('badCode');
+  $('#loginBtn').disabled = true;
+  try { const r = await fetch(BASE + '/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) }); const j = await r.json();
+    if (r.status === 401) $('#loginErr').textContent = t('badCode'); else if (r.status === 429) $('#loginErr').textContent = t('tooMany'); else if (!r.ok) throw 0;
+    else { S.token = j.token; store.set('token', j.token); playCtx(); start(); } } catch { $('#loginErr').textContent = t('netErr'); }
+  $('#loginBtn').disabled = false;
+}
+function signOut(silent) { try { S.ws && S.ws.close(); } catch {} S.ws = null; clearTimeout(connect.t); S.token = null; S.me = null; store.set('token', null); closeSos(); $('#settings').hidden = true; $('#app').hidden = true; $('#login').hidden = false; $('#code').value = ''; }
+function start() { $('#login').hidden = true; $('#app').hidden = false; applyLang(); connect(); wakeLock(); registerSW(); initNearby(); }
+/* ---------------- Nearby mode (Android app: phone to phone, no internet) ---------------- */
+let nbPeers = 0, nbOffSince = 0, nbOnSince = 0;
+function nbBanner() { const b = $('#banner'); if (S.wsState === 'on') { b.hidden = true; return; } if (window.Nearby && Nearby.ready()) { b.hidden = false; b.textContent = 'Nearby mode: ' + nbPeers + ' phone' + (nbPeers === 1 ? '' : 's') + ' in range (no internet)'; } }
+function initNearby() {
+  const N = window.Nearby; if (!N || !N.available()) return;
+  N.on('peers', (n) => { nbPeers = n; nbBanner(); });
+  N.on('error', (e) => toast('Nearby: ' + e));
+  N.on('stream-start', (e) => {
+    if (S.wsState === 'on') return;                                  // online path already delivers this speech
+    const tx = 'm' + e.streamId; const name = N.nameOf(e.senderId), codec = N.codecName(e.codec);
+    const r = { tx, ch: e.channelId, name, from: e.senderId, sink: codecSupportedForRx(codec) ? makeSink(codec, e.rate) : null };
+    S.rx.set(tx, r); S.speaking[e.channelId] = name; beep(720, 60, .18); renderTalk(); renderChannels();
+  });
+  N.on('audio', (e) => { const r = S.rx.get('m' + e.streamId); if (r && r.sink) for (const f of e.frames) { stats.rxFrames++; r.sink.push(f); } });
+  N.on('stream-end', (e) => rxEnd('m' + e.streamId));
+  const tick = async () => {
+    const on = S.wsState === 'on', now = Date.now();
+    if (on) { nbOffSince = 0; nbOnSince ||= now; if (!N.ready() || now - nbOnSince > 0) { try { await N.enroll(BASE, S.token); } catch {} } if (N.ready() && now - nbOnSince > 60000) N.stop(); }
+    else { nbOnSince = 0; nbOffSince ||= now; if (now - nbOffSince > 8000 && !N.ready() && N.hasCreds()) N.start(); }
+    nbBanner();
+  };
+  setInterval(tick, 3000); tick();
+}
+function registerSW() { if (!NATIVE && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); }
+
+function bind() {
+  document.querySelectorAll('[data-lang]').forEach((b) => (b.onclick = () => { lang = b.dataset.lang; store.set('lang', lang); applyLang(); setCon(S.wsState); }));
+  $('#loginBtn').onclick = login; $('#code').addEventListener('keydown', (e) => e.key === 'Enter' && login());
+  const p = $('#ptt'); let tapOn = false;
+  p.addEventListener('pointerdown', (e) => { e.preventDefault(); try { p.setPointerCapture(e.pointerId); } catch {} if (S.opts.tap) { tapOn = !tapOn; tapOn ? txBegin() : txStop(); } else txBegin(); });
+  const up = () => { if (!S.opts.tap) txStop(); }; ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => p.addEventListener(ev, up));
+  p.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('keydown', (e) => { if (e.code === 'Space' && !e.repeat && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '') && !$('#app').hidden) { e.preventDefault(); S.opts.tap ? (tapOn = !tapOn, tapOn ? txBegin() : txStop()) : txBegin(); } });
+  document.addEventListener('keyup', (e) => { if (e.code === 'Space' && !S.opts.tap) txStop(); });
+  $('#tabMsg').onclick = () => { S.tab = 'msg'; $('#tabMsg').classList.add('sel'); $('#tabPpl').classList.remove('sel'); $('#comp').hidden = false; renderList(true); };
+  $('#tabPpl').onclick = () => { S.tab = 'ppl'; $('#tabPpl').classList.add('sel'); $('#tabMsg').classList.remove('sel'); $('#comp').hidden = true; renderPeople(); };
+  $('#sendTxt').onclick = sendText; $('#txt').addEventListener('keydown', (e) => e.key === 'Enter' && sendText()); $('#locBtn').onclick = sendLoc;
+  $('#setBtn').onclick = () => { $('#optTap').checked = S.opts.tap; $('#optBeep').checked = S.opts.beep; $('#optWake').checked = S.opts.wake; $('#optVol').value = S.opts.vol; $('#settings').hidden = false; };
+  const saveOpts = () => { S.opts.tap = $('#optTap').checked; S.opts.beep = $('#optBeep').checked; S.opts.wake = $('#optWake').checked; S.opts.vol = +$('#optVol').value; store.set('opts', S.opts); setVol(); renderTalk(); wakeLock(); };
+  ['#optTap', '#optBeep', '#optWake', '#optVol'].forEach((s) => $(s).addEventListener('input', saveOpts));
+  $('#closeSet').onclick = () => ($('#settings').hidden = true); $('#settings').addEventListener('click', (e) => e.target.id === 'settings' && ($('#settings').hidden = true));
+  $('#logoutBtn').onclick = () => signOut();
+  $('#sosAck').onclick = () => { if (sosCur && S.ws) S.ws.send(JSON.stringify({ t: 'sos_ack', id: sosCur.id })); $('#sosAck').hidden = true; };
+  $('#sosClose').onclick = closeSos; bindSos();
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('#settings').hidden = true; } });
+}
+bind(); applyLang();
+if (S.token) start(); else $('#login').hidden = false;
+</script>
+<script type="module" src="nearby.js"></script>
+</body>
+</html>

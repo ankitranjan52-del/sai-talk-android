@@ -1,0 +1,8 @@
+{
+  "appId": "com.saielectric.talk",
+  "appName": "Sai Talk",
+  "webDir": "www",
+  "backgroundColor": "#0b0b0d",
+  "android": { "allowMixedContent": false },
+  "server": { "androidScheme": "https" }
+}
