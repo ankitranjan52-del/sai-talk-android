@@ -513,11 +513,16 @@ function signOut(silent) { try { S.ws && S.ws.close(); } catch {} S.ws = null; c
 function start() { $('#login').hidden = true; $('#app').hidden = false; applyLang(); connect(); wakeLock(); registerSW(); initNearby(); }
 /* ---------------- Nearby mode (Android app: phone to phone, no internet) ---------------- */
 let nbPeers = 0, nbOffSince = 0, nbOnSince = 0;
-function nbBanner() { const b = $('#banner'); if (S.wsState === 'on') { b.hidden = true; return; } if (window.Nearby && Nearby.ready()) { b.hidden = false; b.textContent = 'Nearby mode: ' + nbPeers + ' phone' + (nbPeers === 1 ? '' : 's') + ' in range (no internet)'; } }
+function nbBanner() {
+  const b = $('#banner'); if (S.wsState === 'on') { b.hidden = true; return; }
+  const N = window.Nearby; b.hidden = false;
+  if (!N || !N.available()) { b.textContent = t('offline') + ' - Nearby mode only works in the Android app'; return; }
+  b.textContent = N.ready() ? 'Nearby mode: ' + nbPeers + ' phone' + (nbPeers === 1 ? '' : 's') + ' in range (no internet)' : 'No internet. Nearby: ' + N.status();
+}
 function initNearby() {
   const N = window.Nearby; if (!N || !N.available()) return;
   N.on('peers', (n) => { nbPeers = n; nbBanner(); });
-  N.on('error', (e) => toast('Nearby: ' + e));
+  N.on('error', (e) => toast('Nearby: ' + e)); N.on('why', nbBanner);
   N.on('stream-start', (e) => {
     if (S.wsState === 'on') return;                                  // online path already delivers this speech
     const tx = 'm' + e.streamId; const name = N.nameOf(e.senderId), codec = N.codecName(e.codec);

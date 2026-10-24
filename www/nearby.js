@@ -16,6 +16,8 @@ N.native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
 N.plugin = N.native && cap.registerPlugin ? cap.registerPlugin('SaiNearby') : null;
 N.on = (e, f) => { (N.handlers[e] ||= []).push(f); return N; };
 const emit = (e, ...a) => (N.handlers[e] || []).forEach((f) => { try { f(...a); } catch {} });
+N.why = 'starting'; const why = (x) => { N.why = x; emit('why', x); };
+N.status = () => N.ready() ? 'on' : N.why;
 N.available = () => !!N.plugin;
 N.ready = () => !!(N.started && N.node);
 N.peerCount = () => N.peers;
@@ -30,9 +32,12 @@ async function deviceKey() {
 N.enroll = async (base, token) => {
   N.base = base; const cur = JSON.parse(ls.get('nb_creds') || 'null');
   if (cur && cur.exp * 1000 - Date.now() > 3600e3 && cur.token === token && Date.now() - (cur.at || 0) < 6 * 3600e3) return true;
-  const dk = await deviceKey();
-  const r = await fetch(base + '/api/offline/enroll', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ pub: b64(dk.publicRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') }) });
-  if (!r.ok) return false; const j = await r.json(); j.token = token; j.at = Date.now(); ls.set('nb_creds', JSON.stringify(j)); return true;
+  try {
+    const dk = await deviceKey();
+    const r = await fetch(base + '/api/offline/enroll', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ pub: b64(dk.publicRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') }) });
+    if (!r.ok) { why(r.status === 403 ? 'offline mode is off on the server (admin: turn it on)' : 'pass refused by server (' + r.status + ')'); return false; }
+    const j = await r.json(); j.token = token; j.at = Date.now(); ls.set('nb_creds', JSON.stringify(j)); why('pass saved, waiting for no internet'); return true;
+  } catch (e) { why('could not get the offline pass: ' + (e && e.message || e)); return false; }
 };
 N.rememberNames = (users) => ls.set('nb_names', JSON.stringify(Object.fromEntries((users || []).map((u) => [u.id, u.name]))));
 N.nameOf = (id) => { try { return JSON.parse(ls.get('nb_names') || '{}')[id] || 'User ' + id; } catch { return 'User ' + id; } };
@@ -51,16 +56,19 @@ async function buildNode() {
 }
 
 N.start = async () => {
-  if (!N.plugin || N.started || !N.hasCreds()) return false;
-  let p = await N.plugin.permissions(); if (!p.granted) { await N.plugin.requestPermissions(); for (let i = 0; i < 60 && !(p = await N.plugin.permissions()).granted; i++) await new Promise((r) => setTimeout(r, 500)); if (!p.granted) { emit('error', 'permissions'); return false; } }
-  N.node = await buildNode(); const me = N.node.id;
+  if (!N.plugin || N.started) return false;
+  if (!N.hasCreds()) { why('no offline pass yet: open the app once with internet'); return false; }
+  let p = await N.plugin.permissions(); if (!p.granted) { await N.plugin.requestPermissions(); for (let i = 0; i < 60 && !(p = await N.plugin.permissions()).granted; i++) await new Promise((r) => setTimeout(r, 500)); if (!p.granted) { why('permission missing: ' + (p.missing || []).map((x) => x.split('.').pop()).join(', ')); emit('error', 'permissions'); return false; } }
+  try { N.node = await buildNode(); } catch (e) { why('pass unreadable: ' + (e && e.message || e)); ls.set('nb_creds', 'null'); return false; }
+  const me = N.node.id;
   if (!N.wired) { N.wired = true;
     N.plugin.addListener('packet', (e) => N.node && N.link.onReceive && N.link.onReceive(e.peer, unb64(e.data), -60));
     N.plugin.addListener('peerUp', () => N.node && N.node.hello());
     N.plugin.addListener('peerDown', (e) => N.link.onPeerDown && N.link.onPeerDown(e.peer));
-    N.plugin.addListener('error', (e) => emit('error', e.detail));
+    N.plugin.addListener('error', (e) => { why('radio: ' + e.detail); emit('error', e.detail); });
   }
-  await N.plugin.start({ name: me + '-' + Math.random().toString(36).slice(2, 6) }); N.started = true;
+  try { await N.plugin.start({ name: me + '-' + Math.random().toString(36).slice(2, 6) }); } catch (e) { why('could not start: ' + (e && e.message || e)); N.node = null; return false; }
+  N.started = true; why('on');
   // The native service ticks every second. Native events are not throttled when the screen is off,
   // whereas JS timers in a hidden WebView are, so discovery and routing are driven from the native clock.
   N.tk = 0; N.tickL = await N.plugin.addListener('tick', () => { if (!N.node) return; N.node.tickRouter(); if ((++N.tk & 1) === 0) N.node.hello(); });
