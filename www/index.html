@@ -177,8 +177,9 @@ input[type=range]{width:100%;accent-color:var(--or)}
 </div>
 <div id="toast" class="toast" hidden></div>
 
+<script src="capacitor.js"></script>
 <script>
-const APP_BUILD = '0.2.2';
+const APP_BUILD = '0.2.3';
 const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 const BASE = window.SAI_BASE !== undefined ? window.SAI_BASE : (NATIVE ? 'https://sai-talk.5mixnmatch.workers.dev' : '');
 
