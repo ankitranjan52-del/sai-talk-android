@@ -179,7 +179,7 @@ input[type=range]{width:100%;accent-color:var(--or)}
 
 <script src="capacitor.js"></script>
 <script>
-const APP_BUILD = '0.2.4';
+const APP_BUILD = '0.2.5';
 const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 const BASE = window.SAI_BASE !== undefined ? window.SAI_BASE : (NATIVE ? 'https://sai-talk.5mixnmatch.workers.dev' : '');
 
@@ -313,7 +313,7 @@ function connect() {
   };
   ws.onerror = () => {};
 }
-function setCon(s) { S.wsState = s; const d = $('#conDot'); d.className = 'dot ' + s; $('#conTxt').textContent = s === 'on' ? t('connected') : s === 'wait' ? t('connecting') : t('offline'); const b = $('#banner'); b.hidden = s === 'on'; b.textContent = t('offBanner'); if (s !== 'on') nbBanner(); }
+function setCon(s) { S.wsState = s; const d = $('#conDot'); d.className = 'dot ' + s; $('#conTxt').textContent = s === 'on' ? t('connected') : s === 'wait' ? t('connecting') : t('offline'); const b = $('#banner'); b.hidden = s === 'on'; b.textContent = t('offBanner'); nbBanner(); }
 window.addEventListener('online', () => S.token && (!S.ws || S.ws.readyState > 1) && connect());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { if (S.token && (!S.ws || S.ws.readyState > 1)) connect(); wakeLock(); } });
 
@@ -516,11 +516,11 @@ function start() { $('#login').hidden = true; $('#app').hidden = false; applyLan
 /* ---------------- Nearby mode (Android app: phone to phone, no internet) ---------------- */
 let nbLastWhy = '', nbPeers = 0, nbOffSince = 0, nbOnSince = 0;
 function nbBanner() {
-  const b = $('#banner'); if (S.wsState === 'on') { b.hidden = true; return; }
-  const N = window.Nearby; b.hidden = false;
-  if (!NATIVE) { if (!b.textContent.includes('Android app')) b.textContent = t('offBanner') + ' [Website: Nearby mode needs the Android app]'; return; }
-  if (!N || !N.available()) { b.textContent = '[Android app ' + APP_BUILD + '] Nearby: ' + (window.__nbErr ? 'code failed: ' + window.__nbErr : !N ? 'code did not load' : 'native plugin not found (' + (N.err || 'no detail') + ')'); return; }
-  b.textContent = N.ready() ? 'Nearby mode: ' + nbPeers + ' phone' + (nbPeers === 1 ? '' : 's') + ' in range (no internet)' : '[Android app ' + APP_BUILD + '] No internet. Nearby: ' + N.status();
+  const b = $('#banner'), on = S.wsState === 'on', N = window.Nearby;
+  if (!NATIVE) { if (on) { b.hidden = true; return; } b.hidden = false; if (!b.textContent.includes('Android app')) b.textContent = t('offBanner') + ' [Website: Nearby mode needs the Android app]'; return; }
+  b.hidden = false; const tag = '[Android app ' + APP_BUILD + '] ' + (on ? 'Online. ' : S.wsState === 'wait' ? 'Connecting. ' : 'No internet. ');
+  if (!N || !N.available()) { b.textContent = tag + 'Nearby: ' + (window.__nbErr ? 'code failed: ' + window.__nbErr : !N ? 'code did not load' : 'native plugin not found (' + (N.err || 'no detail') + ')'); return; }
+  b.textContent = (!on && N.ready()) ? 'Nearby mode: ' + nbPeers + ' phone' + (nbPeers === 1 ? '' : 's') + ' in range (no internet)' : tag + 'Nearby: ' + N.status();
 }
 function initNearby() {
   // nearby.js is a deferred module: on auto-login this runs before it has executed, so wait for the page load.
