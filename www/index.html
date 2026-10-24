@@ -179,7 +179,7 @@ input[type=range]{width:100%;accent-color:var(--or)}
 
 <script src="capacitor.js"></script>
 <script>
-const APP_BUILD = '0.2.3';
+const APP_BUILD = '0.2.4';
 const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 const BASE = window.SAI_BASE !== undefined ? window.SAI_BASE : (NATIVE ? 'https://sai-talk.5mixnmatch.workers.dev' : '');
 
@@ -514,7 +514,7 @@ async function login() {
 function signOut(silent) { try { S.ws && S.ws.close(); } catch {} S.ws = null; clearTimeout(connect.t); S.token = null; S.me = null; store.set('token', null); closeSos(); $('#settings').hidden = true; $('#app').hidden = true; $('#login').hidden = false; $('#code').value = ''; }
 function start() { $('#login').hidden = true; $('#app').hidden = false; applyLang(); connect(); wakeLock(); registerSW(); initNearby(); }
 /* ---------------- Nearby mode (Android app: phone to phone, no internet) ---------------- */
-let nbPeers = 0, nbOffSince = 0, nbOnSince = 0;
+let nbLastWhy = '', nbPeers = 0, nbOffSince = 0, nbOnSince = 0;
 function nbBanner() {
   const b = $('#banner'); if (S.wsState === 'on') { b.hidden = true; return; }
   const N = window.Nearby; b.hidden = false;
@@ -527,7 +527,7 @@ function initNearby() {
   if (!window.Nearby && document.readyState !== 'complete') { addEventListener('load', initNearby, { once: true }); return; }
   const N = window.Nearby; if (!N || !N.available()) { nbBanner(); return; }
   N.on('peers', (n) => { nbPeers = n; nbBanner(); });
-  N.on('error', (e) => toast('Nearby: ' + e)); N.on('why', nbBanner);
+  N.on('error', (e) => toast('Nearby: ' + e)); N.on('why', (w) => { nbBanner(); if (S.wsState === 'on' && w !== nbLastWhy) toast('Nearby: ' + w); nbLastWhy = w; });
   N.on('stream-start', (e) => {
     if (S.wsState === 'on') return;                                  // online path already delivers this speech
     const tx = 'm' + e.streamId; const name = N.nameOf(e.senderId), codec = N.codecName(e.codec);
@@ -539,7 +539,7 @@ function initNearby() {
   const tick = async () => {
     const on = S.wsState === 'on', now = Date.now();
     if (on) { nbOffSince = 0; nbOnSince ||= now; if (!N.ready() || now - nbOnSince > 0) { try { await N.enroll(BASE, S.token); } catch {} } if (N.ready() && now - nbOnSince > 60000) N.stop(); }
-    else { nbOnSince = 0; nbOffSince ||= now; if (now - nbOffSince > 8000 && !N.ready() && N.hasCreds()) N.start(); }
+    else { nbOnSince = 0; nbOffSince ||= now; if (now - nbOffSince > 8000 && !N.ready()) N.start(); else if (!N.ready() && !N.hasCreds()) N.why = 'no offline pass yet: open the app once with internet and wait a minute'; }
     nbBanner();
   };
   setInterval(tick, 3000); tick();

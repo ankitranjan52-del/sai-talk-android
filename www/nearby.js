@@ -32,6 +32,7 @@ async function deviceKey() {
 N.enroll = async (base, token) => {
   N.base = base; const cur = JSON.parse(ls.get('nb_creds') || 'null');
   if (cur && cur.exp * 1000 - Date.now() > 3600e3 && cur.token === token && Date.now() - (cur.at || 0) < 6 * 3600e3) return true;
+  if (N.lastTry && Date.now() - N.lastTry < 30000) return false; N.lastTry = Date.now();
   try {
     const dk = await deviceKey();
     const r = await fetch(base + '/api/offline/enroll', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ pub: b64(dk.publicRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') }) });
