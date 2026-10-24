@@ -13,7 +13,7 @@ const CODEC_NAME = { 1: 'opus', 2: 'ulaw' };
 const N = { node: null, plugin: null, started: false, peers: 0, creds: null, handlers: {}, base: '' };
 const cap = window.Capacitor;
 N.native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
-N.plugin = N.native && cap.registerPlugin ? cap.registerPlugin('SaiNearby') : null;
+try { N.plugin = N.native && cap.registerPlugin ? cap.registerPlugin('SaiNearby') : null; if (!N.plugin) N.err = 'native=' + N.native + ' registerPlugin=' + typeof (cap && cap.registerPlugin); } catch (e) { N.err = 'register: ' + (e && e.message); N.plugin = null; }
 N.on = (e, f) => { (N.handlers[e] ||= []).push(f); return N; };
 const emit = (e, ...a) => (N.handlers[e] || []).forEach((f) => { try { f(...a); } catch {} });
 N.why = 'starting'; const why = (x) => { N.why = x; emit('why', x); };

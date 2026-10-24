@@ -178,7 +178,7 @@ input[type=range]{width:100%;accent-color:var(--or)}
 <div id="toast" class="toast" hidden></div>
 
 <script>
-const APP_BUILD = '0.2.1';
+const APP_BUILD = '0.2.2';
 const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 const BASE = window.SAI_BASE !== undefined ? window.SAI_BASE : (NATIVE ? 'https://sai-talk.5mixnmatch.workers.dev' : '');
 
@@ -518,7 +518,7 @@ function nbBanner() {
   const b = $('#banner'); if (S.wsState === 'on') { b.hidden = true; return; }
   const N = window.Nearby; b.hidden = false;
   if (!NATIVE) { if (!b.textContent.includes('Android app')) b.textContent = t('offBanner') + ' [Website: Nearby mode needs the Android app]'; return; }
-  if (!N || !N.available()) { b.textContent = '[Android app ' + APP_BUILD + '] Nearby plugin is missing in this build'; return; }
+  if (!N || !N.available()) { b.textContent = '[Android app ' + APP_BUILD + '] Nearby: ' + (window.__nbErr ? 'code failed: ' + window.__nbErr : !N ? 'code did not load' : 'native plugin not found (' + (N.err || 'no detail') + ')'); return; }
   b.textContent = N.ready() ? 'Nearby mode: ' + nbPeers + ' phone' + (nbPeers === 1 ? '' : 's') + ' in range (no internet)' : '[Android app ' + APP_BUILD + '] No internet. Nearby: ' + N.status();
 }
 function initNearby() {
@@ -569,6 +569,8 @@ function bind() {
 bind(); applyLang();
 if (S.token) start(); else $('#login').hidden = false;
 </script>
-<script type="module" src="nearby.js"></script>
+<script>
+import('./nearby.js').catch((e) => { window.__nbErr = (e && (e.stack || e.message)) || String(e); window.__nbErr = String(window.__nbErr).split('\n')[0].slice(0, 160); try { nbBanner(); } catch {} });
+</script>
 </body>
 </html>
